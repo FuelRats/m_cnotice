@@ -11,7 +11,7 @@ ModuleHeader MOD_HEADER = {"third/m_cnotice", "1.0",
                            "Alex Sørlie", "unrealircd-6"};
 
 MOD_INIT() {
-  CommandAdd(modinfo->handle, "CNOTICE", cmd_cnotice, 3, CMD_USER);
+  CommandAdd(modinfo->handle, "CNOTICE", cmd_cnotice, 3, CMD_USER | CMD_SERVER);
   CommandAdd(modinfo->handle, "MSGAS", cmd_msgas, 4, CMD_USER | CMD_SERVER);
   return MOD_SUCCESS;
 }
@@ -45,13 +45,10 @@ CMD_FUNC(cmd_cnotice) {
   const char *target_nick, *channel_name, *message;
   Client *target;
   Channel *channel;
-  Membership *m;
-
-  if (!MyUser(client))
-    return;
 
   if (parc < 3) {
-    sendnotice(client, "Usage: /CNOTICE <nick> <#channel> <message>");
+    if (MyUser(client))
+      sendnotice(client, "Usage: /CNOTICE <nick> <#channel> <message>");
     return;
   }
 
@@ -59,38 +56,48 @@ CMD_FUNC(cmd_cnotice) {
   channel_name = parv[2];
   message = parv[3];
 
-  // Check if the channel exists
   channel = find_channel(channel_name);
   if (!channel) {
-    sendnotice(client, "CNOTICE: Channel %s does not exist.", channel_name);
+    if (MyUser(client))
+      sendnotice(client, "CNOTICE: Channel %s does not exist.", channel_name);
     return;
   }
 
-  // Check if the target exists
   target = find_client(target_nick, NULL);
   if (!target || !IsUser(target)) {
-    sendnotice(client, "CNOTICE: No such user %s.", target_nick);
+    if (MyUser(client))
+      sendnotice(client, "CNOTICE: No such user %s.", target_nick);
     return;
   }
 
-  // Check if the sender is in the channel and has +o or higher
-  if (!check_channel_access(client, channel, "hoaq") && !IsULine(client)) {
-    if (ValidatePermissionsForPath("channel:override:invite:invite-only",
-                                   client, NULL, channel, NULL) &&
-        client == target) {
-    } else {
-      sendnumeric(client, ERR_CHANOPRIVSNEEDED, channel->name);
-      return;
+  /* Permission checks only for local users */
+  if (MyUser(client)) {
+    if (!check_channel_access(client, channel, "hoaq") && !IsULine(client)) {
+      if (ValidatePermissionsForPath("channel:override:invite:invite-only",
+                                     client, NULL, channel, NULL) &&
+          client == target) {
+      } else {
+        sendnumeric(client, ERR_CHANOPRIVSNEEDED, channel->name);
+        return;
+      }
     }
   }
+
   Membership *lp = find_membership_link(target->user->channel, channel);
   if (!lp) {
     if (MyUser(client))
       sendnumeric(client, ERR_USERNOTINCHANNEL, target_nick, channel_name);
-
     return;
   }
-  sendcnotice(target, client, channel, message);
+
+  if (MyUser(target)) {
+    /* Target is local, deliver directly */
+    sendcnotice(target, client, channel, message);
+  } else {
+    /* Target is remote, forward CNOTICE to their server */
+    sendto_one(target->direction, NULL, ":%s CNOTICE %s %s :%s",
+               client->id, target_nick, channel_name, message);
+  }
 }
 
 CMD_FUNC(cmd_msgas) {
