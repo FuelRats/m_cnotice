@@ -38,7 +38,7 @@ MOD_UNLOAD() { return MOD_SUCCESS; }
 void sendcnotice(Client *to, Client *from, Channel *channel,
                  const char *message) {
   sendto_prefix_one(to, from, NULL, ":%s NOTICE %s :%s", from->name,
-                    to->name, message);
+                    channel->name, message);
 }
 
 CMD_FUNC(cmd_cnotice) {
