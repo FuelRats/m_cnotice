@@ -38,7 +38,7 @@ MOD_UNLOAD() { return MOD_SUCCESS; }
 void sendcnotice(Client *to, Client *from, Channel *channel,
                  const char *message) {
   sendto_prefix_one(to, from, NULL, ":%s NOTICE %s :%s", from->name,
-                    channel->name, message);
+                    to->name, message);
 }
 
 CMD_FUNC(cmd_cnotice) {
@@ -46,6 +46,9 @@ CMD_FUNC(cmd_cnotice) {
   Client *target;
   Channel *channel;
   Membership *m;
+
+  if (!MyUser(client))
+    return;
 
   if (parc < 3) {
     sendnotice(client, "Usage: /CNOTICE <nick> <#channel> <message>");
