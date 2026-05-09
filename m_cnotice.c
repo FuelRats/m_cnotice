@@ -71,7 +71,7 @@ CMD_FUNC(cmd_cnotice) {
   }
 
   // Check if the sender is in the channel and has +o or higher
-  if (!check_channel_access(client, channel, "oaq") && !IsULine(client)) {
+  if (!check_channel_access(client, channel, "hoaq") && !IsULine(client)) {
     if (ValidatePermissionsForPath("channel:override:invite:invite-only",
                                    client, NULL, channel, NULL) &&
         client == target) {
