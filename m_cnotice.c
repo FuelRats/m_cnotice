@@ -133,7 +133,7 @@ CMD_FUNC(cmd_msgas) {
       if (!IsUser(client)) {
         return;
       }
-      sendto_server(NULL, 0, 0, NULL, ":%s MSGAS %s %s %s", client->id,
+      sendto_server(NULL, 0, 0, NULL, ":%s MSGAS %s %s :%s", client->id,
                     src_nick, target_name, message);
       return;
     }
