@@ -174,8 +174,13 @@ CMD_FUNC(cmd_msgas) {
     }
 
     if (!MyUser(target)) {
-      sendto_server(NULL, 0, 0, NULL, ":%s MSGAS %s %s :%s", client->id,
-                    src_nick, target_name, message);
+      if (parc >= 5 && parv[4] && *parv[4]) {
+        sendto_server(NULL, 0, 0, NULL, ":%s MSGAS %s %s %s :%s", client->id,
+                      src_nick, target_name, parv[3], parv[4]);
+      } else {
+        sendto_server(NULL, 0, 0, NULL, ":%s MSGAS %s %s :%s", client->id,
+                      src_nick, target_name, message);
+      }
       return;
     }
 
