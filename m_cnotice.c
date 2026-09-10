@@ -21,7 +21,7 @@ static int is_translate_service(const Client *client) {
 CMD_FUNC(cmd_cnotice);
 CMD_FUNC(cmd_msgas);
 
-ModuleHeader MOD_HEADER = {"third/m_cnotice", "1.0",
+ModuleHeader MOD_HEADER = {"third/m_cnotice", "1.1",
                            "Channel-Scoped Private NOTICE (CNOTICE)",
                            "Alex Sørlie", "unrealircd-6"};
 
