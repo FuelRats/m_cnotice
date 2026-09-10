@@ -1,6 +1,21 @@
 #include "unrealircd.h"
 
-const char *translate_service_nick = "MechaSqueak[BOT]";
+/* Nicks permitted to use MSGAS. Restricted to the translate-relay service
+ * bots because anyone who can run MSGAS can make another user appear to
+ * speak; NickServ enforces ownership of these nicks. Add nicks here. */
+static const char *translate_service_nicks[] = {
+    "MechaSqueak[BOT]",
+    "DrillSqueak[BOT]",
+    NULL
+};
+
+static int is_translate_service(const Client *client) {
+  const char **n;
+  for (n = translate_service_nicks; *n; n++)
+    if (!strcmp(client->name, *n))
+      return 1;
+  return 0;
+}
 
 // Forward declarations
 CMD_FUNC(cmd_cnotice);
@@ -104,7 +119,7 @@ CMD_FUNC(cmd_msgas) {
   const char *src_nick, *target_name, *message;
   Client *src_user;
 
-  if (IsUser(client) && !IsULine(client) && strcmp(client->name, translate_service_nick) != 0) {
+  if (IsUser(client) && !IsULine(client) && !is_translate_service(client)) {
     sendnumeric(client, ERR_NOPRIVILEGES);
     return;
   }
